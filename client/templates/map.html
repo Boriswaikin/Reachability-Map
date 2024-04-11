@@ -12,7 +12,7 @@
       crossorigin=""
     />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='/styles.css')}}" />
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBgEA5siMmjNeIEwDi2hbn_GesFOzHy7_U&libraries=places"></script>
   </head>
   <body>
@@ -62,6 +62,9 @@
       crossorigin=""
     ></script>
     <!-- Custom JavaScript -->
-    <script defer src="script.js"></script>
+    <script>
+      const mapboxApiKey = "{{ mapbox_api_key }}";
+    </script>
+    <script defer  src="{{ url_for('static', filename='/script.js')}}" ></script>
   </body>
 </html>

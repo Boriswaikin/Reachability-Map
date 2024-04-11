@@ -1,9 +1,12 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,render_template,send_from_directory,url_for
 from flask_cors import CORS
+from dotenv import load_dotenv
 from EV_heatmap_new import return_alpha_shape, get_public_charging_stations
 import os
 
-app = Flask(__name__)
+load_dotenv()
+
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +14,8 @@ current_directory = os.path.dirname(os.path.abspath(__file__))
 @app.route('/')
 def hello():
     hello = "Hello, World!"
-    return jsonify(hello)
+    mapbox_api_key = os.environ.get('MAPBOX_API')
+    return render_template('map.html',mapbox_api_key=mapbox_api_key)
 
 @app.route('/alpha', methods=['GET'])
 def get_alpha_shape():

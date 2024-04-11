@@ -13,13 +13,18 @@ import matplotlib.pyplot as plt
 from geopy.distance import geodesic
 import math
 import sys
-# import os
+import os
+from dotenv import load_dotenv
+
+
 
 def getTripCoordinate(origin, destination,profile='mapbox/driving-traffic'):
     # origin = [-123.11571438985469,49.28079175525552]
     # destination = [-119.49666492648971,49.88929762638151]
+    load_dotenv()
+    mapbox_api_key = os.getenv('MAPBOX_API')
     coordinates = ";".join([f"{lon},{lat}" for lon, lat in [origin, destination]])
-    url = f'https://api.mapbox.com/directions/v5/{profile}/{coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=simplified&access_token={API_KEY}'
+    url = f'https://api.mapbox.com/directions/v5/{profile}/{coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=simplified&access_token={mapbox_api_key}'
     # params = {"annotation":"speed"} 
     response = requests.get(url)
     
@@ -41,6 +46,8 @@ def getTripCoordinate(origin, destination,profile='mapbox/driving-traffic'):
         return False
 
 def getTripDistance(tripCoordinate,profile='mapbox/driving-traffic',):
+    load_dotenv()
+    mapbox_api_key = os.getenv('MAPBOX_API')
     data = tripCoordinate
     max_request_size = 20
     sublists = [data[i:i+max_request_size] for i in range(0, len(data), max_request_size)]
@@ -56,7 +63,7 @@ def getTripDistance(tripCoordinate,profile='mapbox/driving-traffic',):
     for sublist in sublists:
         coordinates_str = '; '.join([f'{item[0]}, {item[1]}' for item in sublist])
 
-        url = f'https://api.mapbox.com/directions/v5/{profile}/{coordinates_str}?&access_token={API_KEY}'
+        url = f'https://api.mapbox.com/directions/v5/{profile}/{coordinates_str}?&access_token={mapbox_api_key}'
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()

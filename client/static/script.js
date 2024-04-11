@@ -25,21 +25,21 @@ var variants = ['#FE0000', '#FE00A5','#FE7000', '#FEC400', '#FEF600', '#00FEE7',
 var map = L.map('map').setView(start, 7);
 
 var carIcon = L.icon({
-    iconUrl: 'electric-car.png',
+    iconUrl: '/static/electric-car.png',
     iconSize:     [38, 38], // size of the icon
     iconAnchor:   [22, 22], // point of the icon which will correspond to marker's location
     popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 });
 
 var waypoints = L.icon({
-    iconUrl: 'waypoints.png',
+    iconUrl: '/static/waypoints.png',
     iconSize:     [25, 25], // size of the icon
     iconAnchor:   [22, 22], // point of the icon which will correspond to marker's location
     popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 });
 
 var charging_station = L.icon({
-    iconUrl: 'charging_station.png',iconSize: [20, 20]
+    iconUrl: '/static/charging_station.png',iconSize: [20, 20]
 })
 
 // add an OpenStreetMap tile layer
@@ -96,7 +96,7 @@ var legend = L.control({position: 'bottomright'});
 legend.onAdd = function (map) {
 
     var div = L.DomUtil.create('div', 'info legend');
-    var circleHTML = '<div style="position:relative; width: 70%;top:65%;left:10%"><div style="font-size: 18px;"><strong>Battery Level</strong></div><div style="width: 100%; display: flex; align-items: center;"><img src="green.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">>=70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="yellow.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">35%-<70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="red.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">0%-<35%</span></div></div>'
+    var circleHTML = '<div style="position:relative; width: 70%;top:65%;left:10%"><div style="font-size: 18px;"><strong>Battery Level</strong></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/green.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">>=70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/yellow.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">35%-<70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/red.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">0%-<35%</span></div></div>'
     var additionalLegendContent = '<div style="position:relative; margin-right:5%;width: 25%;top:10%">' +
                             '<h3 style="width:150px">Color Palette on Battery Level</h3>' +
                             '<div class="container text-center">';
@@ -284,8 +284,8 @@ async function getTripCoordinate(lat, lon) {
     const originStr = origin[0] + ',' + origin[1];
     const destinationStr = destination[0] + ',' + destination[1];
     const coordinates = originStr + ';' + destinationStr;
-
-    return fetch(`https://api.mapbox.com/directions/v5/${profile}/${coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=full&access_token=pk.eyJ1IjoiYm9yaXN3YWlraW4iLCJhIjoiY2xzY3hycng3MDVlZTJ2cTc1YjZiamZmcyJ9.-UEBrr6yXlE9K8O1voTUkg`)
+    console.log(mapboxApiKey)
+    return fetch(`https://api.mapbox.com/directions/v5/${profile}/${coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=full&access_token=${mapboxApiKey}`)
         .then(response => {
             if (!response.ok) {
                 console.error('Response failed, status code:', response.status);
@@ -328,8 +328,8 @@ async function getTripDistance(tripCoordinate, profile = 'mapbox/driving-traffic
 
     for (const sublist of sublists) {
         const coordinates_str = sublist.map(item => `${item[0]}, ${item[1]}`).join('; ');
-
-        const url = `https://api.mapbox.com/directions/v5/${profile}/${coordinates_str}?&access_token=pk.eyJ1IjoiYm9yaXN3YWlraW4iLCJhIjoiY2xzY3hycng3MDVlZTJ2cTc1YjZiamZmcyJ9.-UEBrr6yXlE9K8O1voTUkg`;
+        
+        const url = `https://api.mapbox.com/directions/v5/${profile}/${coordinates_str}?&access_token=${mapboxApiKey}`;
         const response = await fetch(url);
         if (response.ok) {
             const responseData = await response.json();
