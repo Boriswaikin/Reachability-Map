@@ -3,11 +3,11 @@ import pandas as pd
 import osmnx as ox
 import networkx as nx
 import numpy as np
-from globalDefinition import (API_KEY,BATTERY_CAPACITY,MASS,LENGTH,WIDTH,HEIGHT,MAXSPEED)
-from SOC import (
+from client.globalDefinition import (API_KEY,BATTERY_CAPACITY,MASS,LENGTH,WIDTH,HEIGHT,MAXSPEED)
+from client.SOC import (
     getStateOfCharge
 )
-from Elevation import elevation_difference
+from client.Elevation import elevation_difference
 from geopy.distance import geodesic
 import matplotlib.pyplot as plt
 from geopy.distance import geodesic

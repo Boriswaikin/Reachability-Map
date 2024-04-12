@@ -8,7 +8,7 @@ import alphashape
 from jinja2 import Template
 import time
 from scipy.interpolate import griddata
-from EV_testing import generate_waypoints
+from client.EV_testing import generate_waypoints
 from flask import Flask, jsonify
 from shapely.geometry import Polygon
 
@@ -21,7 +21,10 @@ def get_public_charging_stations(latitude, longitude, radius=400000):
         node["amenity"="charging_station"](around:{radius},{latitude},{longitude});
         out;
     """
-    response = requests.get(overpass_url, params={'data': overpass_query})
+    headers = {
+        'Origin': 'http://3.144.235.94/',  # Specify the Origin header to trigger CORS
+    }
+    response = requests.get(overpass_url, params={'data': overpass_query},headers=headers)
     data = response.json()
     charging_stations = []
     for element in data['elements']:
