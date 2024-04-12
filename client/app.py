@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request,render_template,send_from_directory,url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
-from EV_heatmap_new import return_alpha_shape, get_public_charging_stations
+from client.EV_heatmap_new import return_alpha_shape, get_public_charging_stations
 import os
 
 load_dotenv()
@@ -25,6 +25,7 @@ def get_alpha_shape():
     processed_data = return_alpha_shape(lat, lon, battery)
     response = jsonify(processed_data)
     response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Private-Network', 'true')
     return response
 
 @app.route('/station', methods=['GET'])
@@ -34,6 +35,7 @@ def get_station():
     processed_data = get_public_charging_stations(lat, lon)
     response = jsonify(processed_data)
     response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Private-Network', 'true')
     return response
 
 if __name__ == '__main__':

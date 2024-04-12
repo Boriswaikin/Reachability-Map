@@ -3,11 +3,11 @@ import pandas as pd
 # import osmnx as ox
 # import networkx as nx
 # import numpy as np
-from globalDefinition import (API_KEY)
-from SOC import (
+from client.globalDefinition import (API_KEY)
+from client.SOC import (
     getStateOfCharge
 )
-from Elevation import elevation_difference
+from client.Elevation import elevation_difference
 from geopy.distance import geodesic
 import matplotlib.pyplot as plt
 from geopy.distance import geodesic
@@ -25,8 +25,11 @@ def getTripCoordinate(origin, destination,profile='mapbox/driving-traffic'):
     mapbox_api_key = os.getenv('MAPBOX_API')
     coordinates = ";".join([f"{lon},{lat}" for lon, lat in [origin, destination]])
     url = f'https://api.mapbox.com/directions/v5/{profile}/{coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=simplified&access_token={mapbox_api_key}'
+    headers = {
+        'Origin': 'http://3.144.235.94/',  # Specify the Origin header to trigger CORS
+    }
     # params = {"annotation":"speed"} 
-    response = requests.get(url)
+    response = requests.get(url,headers=headers)
     
     if response.status_code == 200:
         if response.json()['code'] != "Ok":
@@ -64,7 +67,10 @@ def getTripDistance(tripCoordinate,profile='mapbox/driving-traffic',):
         coordinates_str = '; '.join([f'{item[0]}, {item[1]}' for item in sublist])
 
         url = f'https://api.mapbox.com/directions/v5/{profile}/{coordinates_str}?&access_token={mapbox_api_key}'
-        response = requests.get(url)
+        headers = {
+        'Origin': 'http://3.144.235.94/',  # Specify the Origin header to trigger CORS
+        }
+        response = requests.get(url,headers=headers)
         if response.status_code == 200:
             data = response.json()
             leg_data = data['routes'][0]['legs']
