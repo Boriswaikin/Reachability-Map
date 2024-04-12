@@ -23,6 +23,7 @@ var battery_level = ['<10%','<20%','<30%','<40%','<50%','<60%','<70%','<80%','<9
 var variants = ['#FE0000', '#FE00A5','#FE7000', '#FEC400', '#FEF600', '#00FEE7', '#00D8FE', '#009AFE','#00FE9A','#00FE40'];
 // create a map in the "map" div, set the view to a given place and zoom
 var map = L.map('map').setView(start, 7);
+const baseUrl = window.location.origin;
 
 var carIcon = L.icon({
     iconUrl: '/static/electric-car.png',
@@ -406,7 +407,8 @@ function getChargePair(tripdistance, current_battery_level,start_speed) {
 function getalphashape(battery=100){
     lat = start[0]
     lon = start[1]
-    fetch(`http://127.0.0.1:5000/alpha?lat=${lat}&lon=${lon}&battery=${battery}`)
+    fetch(`${baseUrl}/alpha?lat=${lat}&lon=${lon}&battery=${battery}`)
+
     .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -467,6 +469,7 @@ function convertToPairs(array) {
 async function getchargingstation(){
     lat = start[0]
     lon = start[1]
+    
     //clear all the existing charging station
     map.eachLayer(function(layer) {
     // Check if the layer is a marker and its icon option is set to charging_station
@@ -476,7 +479,7 @@ async function getchargingstation(){
     }
 });
     chargingStationMarkers = []
-    fetch(`http://127.0.0.1:5000/station?lat=${lat}&lon=${lon}`)
+    fetch(`${baseUrl}/station?lat=${lat}&lon=${lon}`)
     .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
