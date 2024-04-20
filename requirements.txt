@@ -75,7 +75,6 @@ notebook==7.0.7
 notebook_shim==0.2.3
 overrides==7.7.0
 packaging==23.2
-pandas==2.2.0
 pandocfilters==1.5.1
 parso==0.8.3
 pexpect==4.9.0
