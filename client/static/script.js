@@ -640,7 +640,7 @@ function initAutocomplete() {
 function show_battery_level(marker){
     marker.on('mouseover', function(e) {
         if (e.target.options.icon === carIcon) {
-            e.target.bindPopup(`<b>Current battery level of the vehicle: </b><br>${Math.round(remaining_battery * 10)/10}%<br>`).openPopup();
+            e.target.bindPopup(`<b style="font-size: 20px;">Current battery level of the vehicle: ${Math.round(remaining_battery * 10)/10}%</b>`).openPopup();
         }
     });
     
