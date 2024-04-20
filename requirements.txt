@@ -21,7 +21,6 @@ click-log==0.4.0
 click-plugins==1.1.1
 cligj==0.7.2
 comm==0.2.1
-contourpy==1.2.0
 cycler==0.12.1
 cykhash==2.0.1
 Cython==3.0.8
