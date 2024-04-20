@@ -36,7 +36,6 @@ oauthlib==3.2.0
 packaging==24.0
 pandas==2.0.3
 pillow==10.3.0
-PyGObject==3.42.1
 PyJWT==2.3.0
 pyparsing==2.4.7
 python-apt==2.4.0+ubuntu3
