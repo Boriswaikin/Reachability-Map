@@ -21,10 +21,7 @@ def get_public_charging_stations(latitude, longitude, radius=400000):
         node["amenity"="charging_station"](around:{radius},{latitude},{longitude});
         out;
     """
-    headers = {
-        'Origin': 'http://3.144.235.94/',  # Specify the Origin header to trigger CORS
-    }
-    response = requests.get(overpass_url, params={'data': overpass_query},headers=headers)
+    response = requests.get(overpass_url, params={'data': overpass_query})
     data = response.json()
     charging_stations = []
     for element in data['elements']:
@@ -106,7 +103,7 @@ def draw_starting_point(map_object, coordinate):
 def return_alpha_shape(start_latitude,start_longitude, battery=100):
     # center_coordinate = [start_latitude, start_longitude]
     df = generate_waypoints(start_latitude,start_longitude, battery)
-    alpha = 0.3
+    alpha = 1
     # csv_name = 'EV_data.csv'
     # df = pd.read_csv(csv_name, dtype={'Battery_Level': float})
     df = df.drop_duplicates(subset=['Latitude', 'Longitude'])
