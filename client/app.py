@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request,render_template,send_from_directory,url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
-from EV_heatmap_new import return_alpha_shape, get_public_charging_stations
+from client.EV_heatmap_new import return_alpha_shape, get_public_charging_stations
 import os
 
 load_dotenv()
@@ -39,4 +39,4 @@ def get_station():
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0",port=8000)
