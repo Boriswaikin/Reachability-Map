@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request,render_template,send_from_directory,url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
-from .EV_heatmap_new import return_alpha_shape, get_public_charging_stations
+from EV_heatmap_new import return_alpha_shape, get_public_charging_stations
 import os
 
 load_dotenv()

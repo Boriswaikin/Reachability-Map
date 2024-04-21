@@ -1,5 +1,5 @@
 import math
-from .globalDefinition import (
+from globalDefinition import (
     BATTERY_CAPACITY,
     MASS,
     GRAVITY,
