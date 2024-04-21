@@ -37,6 +37,7 @@ packaging==24.0
 pandas==2.0.3
 pillow==10.3.0
 PyJWT==2.3.0
+pycparser==2.21
 pyparsing==2.4.7
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
