@@ -8,7 +8,7 @@ import alphashape
 from jinja2 import Template
 import time
 from scipy.interpolate import griddata
-from client.EV_testing import generate_waypoints
+from .EV_testing import generate_waypoints
 from flask import Flask, jsonify
 from shapely.geometry import Polygon
 
