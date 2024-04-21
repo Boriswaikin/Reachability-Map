@@ -7,7 +7,7 @@ from globalDefinition import (API_KEY)
 from SOC import (
     getStateOfCharge
 )
-from client.Elevation import elevation_difference
+from Elevation import elevation_difference
 from geopy.distance import geodesic
 import matplotlib.pyplot as plt
 from geopy.distance import geodesic
