@@ -3,8 +3,8 @@ import pandas as pd
 # import osmnx as ox
 # import networkx as nx
 # import numpy as np
-from .globalDefinition import (API_KEY)
-from .SOC import (
+from globalDefinition import (API_KEY)
+from SOC import (
     getStateOfCharge
 )
 from client.Elevation import elevation_difference
