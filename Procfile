@@ -1,1 +1,1 @@
-web: gunicorn Reachability-app:wsgi
+web: gunicorn client.app:app
