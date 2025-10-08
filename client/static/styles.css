@@ -57,29 +57,62 @@ button[type="submit"] {
 
 
 #coordinateForm label {
-    margin-bottom: 8px; /* 调整标签与输入框之间的距离 */
-    font-weight: bold; /* 加粗标签文字 */
+    margin-bottom: 8px; /* Adjust distance between label and input */
+    font-weight: bold; /* Bold label text */
     font-family: Arial, sans-serif;
 }
 
 #starting-location{
-    margin-bottom: 8px; /* 调整标签与输入框之间的距离 */
-    font-weight: bold; /* 加粗标签文字 */
+    margin-bottom: 8px; /* Adjust distance between label and input */
+    font-weight: bold; /* Bold label text */
     font-family: Arial, sans-serif;
 }
 
 #loading {
-    display: none;
+    /* DEFAULT STATE: HIDDEN */
+    display: none; 
+    
     position: fixed;
-    z-index: 9999;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(40, 40, 40, 0.75); /* 半透明黑色 */
+    background-color: rgba(40, 40, 40, 0.75);
     backdrop-filter: blur(8px) saturate(180%);
-    background-image: url("https://i.stack.imgur.com/MnyxU.gif");
-    background-repeat: no-repeat;
-    background-position: center;
-  }
+    z-index: 9999;
+    
+    /* Layout properties for stacking (always set, but only used when 'display: flex' is active) */
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+}
+
+/* Spinner element inside */
+#loading::after {
+    content: "";
+    width: 60px;
+    height: 60px;
+    border: 6px solid #ccc;
+    border-top: 6px solid #1e90ff; /* blue segment */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    /* 💥 Modification: Add margin to separate spinner from text 💥 */
+    margin-top: 15px;
+}
+
+#loading-message {
+    color: white; /* Make text visible against dark background */
+    font-size: 1.2em;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    /* No need for margin-bottom because of the margin-top on ::after */
+}
+
+/* Spin animation */
+@keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
 #batteryForm {
     display: none;
@@ -95,64 +128,96 @@ button[type="submit"] {
 }
 
 #batteryInputForm {
+    background-color: white; /* 或者使用 #ffffff */
+    
     padding: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 10%;
 }
 
 #batteryInputForm label {
-    margin-bottom: 8px; /* 调整标签与输入框之间的距离 */
-    font-weight: bold; /* 加粗标签文字 */
+    margin-bottom: 8px; /* Adjust distance between label and input */
+    font-weight: bold; /* Bold label text */
     font-family: Arial, sans-serif;
 }
 
 #coordinateForm input[type="number"] {
-    width: calc(100% - 20px); /* 输入框宽度为父容器宽度减去边距 */
+    width: calc(100% - 20px); /* Input width is parent width minus padding */
    
-    margin-bottom: 16px; /* 调整输入框之间的距离 */
-    border: 1px solid #ced4da; /* 输入框边框 */
-    border-radius: 3px; /* 输入框圆角 */
-    box-sizing: border-box; /* 输入框包含边框和内边距在内的盒子模型 */
+    margin-bottom: 16px; /* Adjust distance between inputs */
+    border: 1px solid #ced4da; /* Input border */
+    border-radius: 3px; /* Input border radius */
+    box-sizing: border-box; /* Input box model includes border and padding */
 }
 
 
 #batteryInputForm button[type="submit"] {
-    width: 80%; /* 按钮宽度与父容器相同 */
-    padding: 8px; /* 按钮内边距 */
-    background-color: #007bff; /* 背景颜色 */
-    color: #fff; /* 文字颜色 */
-    border: none; /* 去除边框 */
-    border-radius: 3px; /* 圆角 */
-    cursor: pointer; /* 鼠标样式 */
-    transition: background-color 0.3s; /* 过渡效果 */
+    width: 80%; /* Button width is same as parent container */
+    padding: 8px; /* Button padding */
+    background-color: #007bff; /* Background color */
+    color: #fff; /* Text color */
+    border: none; /* Remove border */
+    border-radius: 3px; /* Border radius */
+    cursor: pointer; /* Mouse style */
+    transition: background-color 0.3s; /* Transition effect */
 }
 
 #batteryInputForm button[type="submit"]:hover {
-    background-color: #0056b3; /* 鼠标悬停时的背景颜色 */
+    background-color: #0056b3; /* Background color on hover */
 }
 
 #coordinateForm input[type="text"],
 #coordinateForm input[type="number"] {
-    width: calc(100% - 20px); /* 输入框宽度为父容器宽度减去边距 */
-    padding: 8px; /* 调整输入框内边距 */
-    margin-bottom: 16px; /* 调整输入框之间的距离 */
-    border: 1px solid #ced4da; /* 输入框边框 */
-    border-radius: 3px; /* 输入框圆角 */
-    box-sizing: border-box; /* 输入框包含边框和内边距在内的盒子模型 */
+    width: calc(100% - 20px); /* Input width is parent width minus padding */
+    padding: 8px; /* Adjust input padding */
+    margin-bottom: 16px; /* Adjust distance between inputs */
+    border: 1px solid #ced4da; /* Input border */
+    border-radius: 3px; /* Input border radius */
+    box-sizing: border-box; /* Input box model includes border and padding */
 }
 
+/* --- Button Group Container Styles --- */
+/* This container ensures the two buttons are on the same line and controls their collective width */
+#coordinateForm #form-buttons {
+    display: flex;
+    justify-content: space-between; /* Puts space between the two buttons */
+    width: 80%; /* Match the previous width constraint of the submit button */
+    margin-bottom: 16px; /* Add margin below the button group */
+    /* Note: You might need to adjust margin-left/right here depending on the rest of your form CSS */
+}
+
+/* --- Submit Button Styles (Modified for New Layout) --- */
 #coordinateForm button[type="submit"] {
-    width: 80%; /* 按钮宽度与父容器相同 */
-    margin-right: 20px;
-    padding: 8px; /* 按钮内边距 */
-    background-color: #007bff; /* 背景颜色 */
-    color: #fff; /* 文字颜色 */
-    border: none; /* 去除边框 */
-    border-radius: 3px; /* 圆角 */
-    cursor: pointer; /* 鼠标样式 */
-    transition: background-color 0.3s; /* 过渡效果 */
+    width: 48%; /* Use half the container width for the Submit button */
+    /* The old margin-right: 20px is removed, replaced by space-between */
+    
+    padding: 8px; /* Button padding */
+    background-color: #007bff; /* Background color */
+    color: #fff; /* Text color */
+    border: none; /* Remove border */
+    border-radius: 3px; /* Border radius */
+    cursor: pointer; /* Mouse style */
+    transition: background-color 0.3s; /* Transition effect */
 }
 
 #coordinateForm button[type="submit"]:hover {
-    background-color: #0056b3; /* 鼠标悬停时的背景颜色 */
+    background-color: #0056b3; /* Background color on hover */
+}
+
+/* --- NEW: Reset Button Styles --- */
+#resetMapButton {
+    width: 48%; /* Use half the container width for the Reset button */
+    padding: 8px; 
+    
+    /* Red Color Styling */
+    background-color: #dc3545; /* Standard red */
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#resetMapButton:hover {
+    background-color: #c82333; /* Darker red on hover */
 }

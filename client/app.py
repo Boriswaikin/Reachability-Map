@@ -15,7 +15,8 @@ current_directory = os.path.dirname(os.path.abspath(__file__))
 def hello():
     hello = "Hello, World!"
     mapbox_api_key = os.environ.get('MAPBOX_API')
-    return render_template('map.html',mapbox_api_key=mapbox_api_key,url_for=url_for)
+    google_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+    return render_template('map.html',mapbox_api_key=mapbox_api_key,google_api_key=google_api_key,url_for=url_for)
 
 @app.route('/alpha', methods=['GET'])
 def get_alpha_shape():

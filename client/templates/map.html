@@ -14,10 +14,11 @@
     <link rel="shortcut icon" href="#">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='/styles.css')}}" />
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBgEA5siMmjNeIEwDi2hbn_GesFOzHy7_U&libraries=places"></script>
   </head>
   <body>
-    <div id="loading"></div>
+    <div id="loading">
+      <span id="loading-message"></span> 
+    </div>
     <div id="map"></div>
     <div id="batteryForm">
       <form id="batteryInputForm">
@@ -30,16 +31,30 @@
       <form id="coordinateForm">
         <div id="starting-location">START PLAN🚀</div>
         <div>
-          <label for="address">🌍Your Location:</label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            placeholder="2922 10 St SW, Calgary"
-            onFocus="initAutocomplete()"
-            autocomplete="address"
-          />
-        </div>
+          <label for="autocomplete-container">Your address:</label>
+          <div id="autocomplete-container" style="width: 190px;"></div>
+          <input type="hidden" id="selected_address_data" name="address">
+          <style>
+              /* 1. Target the actual input field and components inside the container */
+              #autocomplete-container * {
+                  /* Reduce padding aggressively to shrink vertical size */
+                  padding-top: 0px;    
+                  padding-bottom: 0px; 
+                  
+                  /* Ensure no script forces a large minimum height */
+                  min-height: 0 !important; 
+                  height: auto !important;
+                  
+                  /* Ensure border/padding are calculated inside the width (good practice) */
+                  box-sizing: border-box !important;
+              }
+              
+              /* 2. Set the dropdown width to match the new input width for wrapping */
+              .pac-container {
+                  width: 190px !important;
+              }
+          </style>
+          </div>
         <div>
           <label for="battery">🔋Initial Battery Level:</label>
           <input
@@ -49,12 +64,20 @@
             placeholder="100"
           />
         </div>
-        <button type="submit">Submit</button>
+        
+        <div id="form-buttons">
+          <button type="submit">Submit</button>
+          <button type="button" id="resetMapButton">Reset</button>
+        </div>
       </form>
-      <div style="display: flex;">
-        <input name="checkbox" type="checkbox" id="checkbox"/>
-        <p style="margin-left: 4%;">Hide Alpha Shape</p>
-      </div>
+      <script async defer 
+        src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places">
+      </script>
+      <script defer src="{{ url_for('static', filename='addressComplete.js')}}"></script>
+      <!--div style="display: flex;"!-->
+        <!--input name="checkbox" type="checkbox" id="checkbox"/-->
+        <!--p style="margin-left: 4%;">Hide Alpha Shape</p-->
+      <!--/div-->
     </div>
     <!-- Leaflet JavaScript -->
     <script

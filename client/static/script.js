@@ -1,24 +1,26 @@
 // set starting point coordinate
-var start = [51.0276233, -114.087835];
-var click_lat
-var click_lon
-var remaining_battery
-var chargingStationMarkers = {}
+var initial_start = [49.2827, -123.1207];
+var start = [49.2827, -123.1207];
+var click_lat;
+var click_lon;
+var initial_battery;
+var remaining_battery;
+var chargingStationMarkers = {};
 // var previous_point_speed
-var chunk_size = 10
-const BATTERY_CAPACITY = 75000
-const MASS = 2139
-const GRAVITY = 9.8066
-const CI = 1.75 
-const CR = 1.15
-const C1 = 0.0328
-const C2 = 4.575
-const CD = 0.23
-const AF = 2.22
-const PA = 1.2256
-const ED = 0.93
-const EM = 0.92
-const EB = 0.9
+var chunk_size = 10;
+const BATTERY_CAPACITY = 75000;
+const MASS = 2139;
+const GRAVITY = 9.8066;
+const CI = 1.75 ;
+const CR = 1.15;
+const C1 = 0.0328;
+const C2 = 4.575;
+const CD = 0.23;
+const AF = 2.22;
+const PA = 1.2256;
+const ED = 0.93;
+const EM = 0.92;
+const EB = 0.9;
 var battery_level = ['<10%','<20%','<30%','<40%','<50%','<60%','<70%','<80%','<90%','<100%'];
 var variants = ['#FE0000', '#FE00A5','#FE7000', '#FEC400', '#FEF600', '#00FEE7', '#00D8FE', '#009AFE','#00FE9A','#00FE40'];
 // create a map in the "map" div, set the view to a given place and zoom
@@ -48,21 +50,43 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
 }).addTo(map);
 
-map.on('click', async function(e){
-    var isExistPolygon = 0
-    map.eachLayer(function (layer) {
-        if (layer instanceof L.Polygon) {
-            isExistPolygon = 1
-        }
-    })
-    if (isExistPolygon == 1){
-        var coord = e.latlng;
-        click_lat = coord.lat;
-        click_lon = coord.lng;
-        console.log("You clicked the map at latitude: " + click_lat + " and longitude: " + click_lon);
+// --- Global State Variables ---
+// Holds the temporary marker dropped by the user for confirmation
+var tempConfirmationMarker = null;
+
+// Flag to prevent multiple asynchronous path requests from running simultaneously
+var isProcessingClick = false; 
+
+// Assumed to be defined elsewhere (e.g., L.map('map', ...))
+// var map = ...; 
+
+// Assumed to be defined elsewhere
+// var chargingStationMarkers = ...; 
+// var batteryForm = ...; 
+// var start = ...; 
+// function createPath() { ... }
+// function getalphashape() { ... }
+// function setVisible() { ... }
+
+// --- Core Logic Function ---
+// This function contains all your original code, triggered ONLY by the confirmation button.
+async function processConfirmedLocation(lat, lon) {
+    if (isProcessingClick) return; 
+    isProcessingClick = true; 
+
+    try {
+        click_lat = lat;
+        click_lon = lon;
+        console.log("Processing map click request for latitude: " + click_lat + " and longitude: " + click_lon);
         var clickedCoordinates = [click_lat, click_lon].toString();
-        var result = await createPath()
-        if (result>=0){
+        
+        // Set loading message for path creation
+        document.getElementById('loading-message').textContent = "Getting optimum path to the location...";
+        setVisible('#loading', true);
+        
+        var result = await createPath(); 
+        
+        if (result >= 0) {
             remaining_battery = result;
             if (chargingStationMarkers.hasOwnProperty(clickedCoordinates)){
                 const currentBatteryLabel = document.createElement('label');
@@ -70,55 +94,266 @@ map.on('click', async function(e){
                 currentBatteryLabel.textContent = "Current Battery level is: " + Math.round(remaining_battery * 10)/10 + " %";
                 const form = document.getElementById('batteryInputForm');
                 form.insertBefore(currentBatteryLabel, form.firstChild);
-                map.setView([start[0],start[1]], 10);
+                map.setView([start[0],start[1]], 12);
                 batteryForm.style.display = 'flex';
+                
+                // Clear loading message before showing the battery form
+                document.getElementById('loading-message').textContent = "";
+                setVisible('#loading', false);
+                return; // Exit here as battery form is now visible
             }
-            setVisible('#loading', true);
+            
+            // Set loading message for final range calculation
+            document.getElementById('loading-message').textContent = "Getting optimum path to the location...";
             getalphashape(remaining_battery);
-            map.setView([click_lat,click_lon], 7);  
+            
+            map.setView([click_lat, click_lon], 12);  
         }
+    } catch (error) {
+        console.error("Error during map click path processing:", error);
+    } finally {
+        isProcessingClick = false;
+        
+        // Clear loading message and hide spinner
+        document.getElementById('loading-message').textContent = "";
+        setVisible('#loading', false);
     }
+}
+
+async function processChargingStation(lat, lon) {
+    if (isProcessingClick) return;
+    isProcessingClick = true; 
+
+    try {
+        click_lat = lat;
+        click_lon = lon;
+        console.log("Processing charging station request for latitude: " + click_lat + " and longitude: " + click_lon);
+
+        document.getElementById('loading-message').textContent = "Navigating to charging station...";
+        setVisible('#loading', true);
+        var result = await createPath();
+        
+        if (result >= 0) {
+            remaining_battery = result;
+            const currentBatteryLabel = document.createElement('label');
+            currentBatteryLabel.setAttribute('for', 'currentBatteryLevel');
+            currentBatteryLabel.textContent = "Current Battery level is: " + Math.round(remaining_battery * 10)/10 + " %";
+            const form = document.getElementById('batteryInputForm');
+            form.insertBefore(currentBatteryLabel, form.firstChild);
+            map.setView([start[0],start[1]], 12);
+            batteryForm.style.display = 'flex';
+        }
+        
+    } catch (error) {
+        console.error("Error processing charging station path:", error);
+    } finally {
+        isProcessingClick = false;
+    }
+    document.getElementById('loading-message').textContent = "";
+    setVisible('#loading', false);
+}
+
+map.on('click', async function(e){
+    if (isProcessingClick) {
+        console.log("Click ignored: Processing previous request.");
+        return;
+    }
+    
+    // Clear any previous temporary marker
+    if (tempConfirmationMarker) {
+        map.removeLayer(tempConfirmationMarker);
+        tempConfirmationMarker = null;
+    }
+
+    var coord = e.latlng;
+    var lat = coord.lat;
+    var lon = coord.lng;
+    var latDisplay = lat.toFixed(4);
+    var lonDisplay = lon.toFixed(4);
+
+    // Create the HTML content for the confirmation popup
+    var popupContent = `
+        <div style="text-align: center; min-width: 150px;">
+            <p style="margin-bottom: 5px;"><strong>Confirm Destination:</strong></p>
+            <p style="font-weight: bold; margin-bottom: 10px;">${latDisplay}, ${lonDisplay}</p>
+            <button id="confirmLocationBtn" 
+                    data-lat="${lat}" 
+                    data-lon="${lon}" 
+                    style="margin-right: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Go Here</button>
+            <button id="cancelConfirmationBtn" 
+                    style="background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Cancel</button>
+        </div>
+    `;
+
+    // Drop the temporary marker and bind the popup
+    tempConfirmationMarker = L.marker([lat, lon]).addTo(map);
+    tempConfirmationMarker.bindPopup(popupContent).openPopup();
+
+    map.setView([lat, lon], map.getZoom());
 });
+
+async function getchargingstation(){
+    lat = start[0]
+    lon = start[1]
+    
+    // Clear all the existing charging station markers
+    map.eachLayer(function(layer) {
+        if (layer instanceof L.Marker && layer.options.icon === charging_station) {
+            map.removeLayer(layer);
+        }
+    });
+    chargingStationMarkers = {}; // Initialize as an empty object for key-value storage
+
+    fetch(`${baseUrl}/station?lat=${lat}&lon=${lon}`)
+    .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();})
+    .then(data => {
+        data.forEach(element => {
+            var marker = show_marker(element.lat, element.lon, charging_station);
+            chargingStationMarkers[[element.lat, element.lon].toString()] = marker;
+            
+            // 💥 Charging Station Click: Show Confirmation Popup 💥
+            marker.addEventListener('click', function() {
+                if (isProcessingClick) return; 
+
+                // Clear temporary map click marker if it exists
+                if (tempConfirmationMarker) {
+                    map.removeLayer(tempConfirmationMarker);
+                    tempConfirmationMarker = null;
+                }
+
+                const latDisplay = element.lat.toFixed(4);
+                const lonDisplay = element.lon.toFixed(4);
+                
+                const popupContent = `
+                    <div style="text-align: center; min-width: 150px;">
+                        <p style="margin-bottom: 5px;"><b>Confirm Charging Station:</b></p>
+                        <p style="font-weight: bold; margin-bottom: 10px;">${element.name || 'Station'}</p>
+                        <button id="confirmStationBtn" 
+                                data-lat="${element.lat}" 
+                                data-lon="${element.lon}" 
+                                style="margin-right: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Go Charge</button>
+                        <button id="cancelStationBtn" 
+                                style="background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    </div>
+                `;
+
+                // Bind the popup to the station marker and open it
+                marker.bindPopup(popupContent, {closeButton: false}).openPopup();
+                map.setView([element.lat, element.lon], map.getZoom());
+            });
+        });
+    })
+}
     
 
-const setVisible = (elementOrSelector, visible) => 
-(typeof elementOrSelector === 'string'
-? document.querySelector(elementOrSelector)
-: elementOrSelector
-).style.display = visible ? 'block' : 'none';
+// Listener for buttons INSIDE the popup
+document.addEventListener('click', function(event) {
+    const targetId = event.target.id;
+
+    if (targetId === 'confirmLocationBtn') {
+        // Handle general map click confirmation
+        const lat = parseFloat(event.target.dataset.lat);
+        const lon = parseFloat(event.target.dataset.lon);
+
+        if (tempConfirmationMarker) {
+            map.removeLayer(tempConfirmationMarker);
+            tempConfirmationMarker = null;
+        }
+        map.closePopup();
+
+        processConfirmedLocation(lat, lon);
+        
+    } else if (targetId === 'cancelConfirmationBtn') {
+        // Handle general map click cancellation
+        map.closePopup();
+        if (tempConfirmationMarker) {
+            map.removeLayer(tempConfirmationMarker);
+            tempConfirmationMarker = null;
+        }
+        console.log("Location confirmation cancelled.");
+
+    } else if (targetId === 'confirmStationBtn') {
+        // Handle Charging Station confirmation
+        const lat = parseFloat(event.target.dataset.lat);
+        const lon = parseFloat(event.target.dataset.lon);
+
+        map.closePopup();
+        
+        processChargingStation(lat, lon);
+        
+    } else if (targetId === 'cancelStationBtn') {
+        // Handle Charging Station cancellation
+        map.closePopup();
+        console.log("Charging station selection cancelled.");
+    }
+});
+
+const setVisible = (elementOrSelector, visible) => {
+    const element =
+      typeof elementOrSelector === 'string'
+        ? document.querySelector(elementOrSelector)
+        : elementOrSelector;
+    if (!element) return;
+    element.style.display = visible ? 'flex' : 'none'; // must use flex to center spinner
+};
 
 function getColor(d) {
     var value = parseFloat(d.replace('>', '').replace('%', ''));
     return value === 70 ? "darkgreen" :
         value === 35 ? "yellow" :
         value === 0 ? "red" : "black";
-    }
+}
 var legend = L.control({position: 'bottomright'});
+
 legend.onAdd = function (map) {
-
+    // Create the main legend container div with standard Leaflet classes
     var div = L.DomUtil.create('div', 'info legend');
-    var circleHTML = '<div style="position:relative; width: 70%;top:65%;left:10%"><div style="font-size: 18px;"><strong>Battery Level</strong></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/green.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">>=70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/yellow.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">35%-<70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/red.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">0%-<35%</span></div></div>'
-    var additionalLegendContent = '<div style="position:relative; margin-right:5%;width: 25%;top:10%">' +
-                            '<h3 style="width:150px">Color Palette on Battery Level</h3>' +
-                            '<div class="container text-center">';
+    
+    // The original circleHTML content is commented out as requested.
+    /* var circleHTML = '<div style="position:relative; width: 70%;top:65%;left:10%"><div style="font-size: 18px;"><strong>Battery Level</strong></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/green.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">>=70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/yellow.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">35%-<70%</span></div><div style="width: 100%; display: flex; align-items: center;"><img src="/static/red.png" style="width: 20px; height: 20px; margin-right: 10px;margin-bottom: 5px;margin-top: 5px" /><span style="font-size: 16px;">0%-<35%</span></div></div>'; */
+    
+    // additionalLegendContent container start
+    // 💥 FIX: Removed conflicting inline width/margin from the inner container 
+    // to allow it to fill the space provided by the outer Leaflet control.
+    var additionalLegendContent = '<div>' + 
+                            '<h3 style="width:100%; text-align: center; margin: 5px 0 10px 0;">Color Palette on Battery Level</h3>' +
+                            '<div class="container text-center" style="display: flex; flex-direction: column;">';
 
+    // Loop through battery levels to build the legend content
     battery_level.forEach(function(batteryLevel, index) {
-        additionalLegendContent += '<div class="col py-3" style="background-color: ' + variants[index] + '; text-align: center;"><small style="font-size: 12px;">' + batteryLevel + '</small></div>';
+        additionalLegendContent += '<div class="col py-3" style="background-color: ' + variants[index] + '; text-align: center; margin-bottom: 3px; border-radius: 3px;"><small style="font-size: 12px; color: black; font-weight: bold;">' + batteryLevel + '</small></div>';
     });
 
+    // Close the container divs
     additionalLegendContent += '</div>' +
     '</div>';
 
-    div.innerHTML =additionalLegendContent+circleHTML;
+    // Set the div's content
+    div.innerHTML = additionalLegendContent;
+    
     return div;
 };
+
 legend.addTo(map);
+
+// 💥 MODIFICATION: Use external CSS for control container styling 
+// and only set width/height if absolutely necessary.
 var legendContainer = legend.getContainer();
-legendContainer.style.display='flex';
-legendContainer.style.width = '200px';
-legendContainer.style.height = '250px';
-legendContainer.style.marginBottom = '20px';
-legendContainer.style.marginLeft = '15px';
+
+// 1. Set display to flex and flex-direction to column for clean stacking (optional but helpful)
+legendContainer.style.display = 'flex';
+legendContainer.style.flexDirection = 'column';
+
+// 2. Set max-width to allow content to dictate height, but limit width
+legendContainer.style.maxWidth = '100px'; 
+// Remove the fixed height and conflicting margins
+// legendContainer.style.height = '250px'; 
+// legendContainer.style.marginBottom = '20px'; 
+// legendContainer.style.marginLeft = '15px'; 
 
 
 const batteryForm = document.getElementById('batteryForm');
@@ -131,21 +366,29 @@ document.getElementById('batteryInputForm').addEventListener('submit', async fun
         return; // Stop further execution
     }
     remaining_battery = batteryLevel
+    
+    // Set loading message for battery update
+    document.getElementById('loading-message').textContent = "Updating to new battery level...";
     setVisible('#loading', true);
+    
     getalphashape(remaining_battery);
     
-    map.setView([click_lat,click_lon], 7);
+    map.setView([click_lat,click_lon], 12);
     batteryForm.style.display = 'none';
-    //remove the label 
+    
+    // remove the label 
     const oldLabel = document.querySelector('form#batteryInputForm label[for="currentBatteryLevel"]');
     if (oldLabel) {
         oldLabel.parentNode.removeChild(oldLabel);
     }
-    // setVisible('#loading', false);
+    
+    // Clear loading message and hide spinner
+    document.getElementById('loading-message').textContent = "Updating to new battery level...";
+    setVisible('#loading', false);
 });
 
 async function createPath(){
-    setVisible('#loading', true);
+    // setVisible('#loading', true);
     const coordinates_tmp = await getTripCoordinate(click_lat, click_lon);
     // console.log(coordinates_tmp)
     // if (!coordinates_tmp) return -1;
@@ -175,7 +418,7 @@ async function createPath(){
             if (tripdistance){
                 var [new_charge,new_speed] = getChargePair(tripdistance,previous_charge,previous_speed)
                 if (new_charge<0) {
-                    setVisible('#loading', false);
+                    // setVisible('#loading', false);
                     alert("Not enough battery charge to reach the destination");
                     return -1; // Stop further execution
                 }
@@ -186,7 +429,7 @@ async function createPath(){
             }
         }
         if (chargelist[chargelist.length-1]>0){
-            refresh_shape();
+            // refresh_shape();
             removeMarkerAtCoordinates(start[0],start[1]);
             show_marker(start[0],start[1],waypoints);
             var marker = show_marker(click_lat,click_lon,carIcon);
@@ -203,7 +446,7 @@ async function createPath(){
         console.log("Failed to fetch trip coordinates.");
     }
     start = [click_lat,click_lon]
-    setVisible('#loading', false);
+    // setVisible('#loading', false);
     return chargelist[chargelist.length-1]
 }
 
@@ -404,25 +647,30 @@ function getChargePair(tripdistance, current_battery_level,start_speed) {
     }
     return [previous_charge,previous_speed];
 }
-function getalphashape(battery=100){
-    lat = start[0]
-    lon = start[1]
-    fetch(`${baseUrl}/alpha?lat=${lat}&lon=${lon}&battery=${battery}`)
+async function getalphashape(battery = 100) {
+    // show loading animatio 
+    setVisible('#loading', true);
 
-    .then((response) => {
+    const lat = start[0];
+    const lon = start[1];
+
+    try {
+        const response = await fetch(`${baseUrl}/alpha?lat=${lat}&lon=${lon}&battery=${battery}`);
+
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return response.json();
-    })
-    .then(async data => {
+
+        const data = await response.json();
         console.log("data:", data);
-        var colorlist = ['darkgreen', 'yellow', 'red'];
-        var count = 0;
+
+        /*
+        const colorlist = ['darkgreen', 'yellow', 'red'];
+        let count = 0;
+
         data.forEach(element => {
-            // Check if the element is an empty list
             if (element.length > 0) {
-                var polygon = L.polygon(element, {
+                L.polygon(element, {
                     color: colorlist[count],
                     fillColor: colorlist[count],
                     weight: 3
@@ -430,12 +678,15 @@ function getalphashape(battery=100){
             }
             count++;
         });
+        */
         await getchargingstation();
-        setVisible('#loading', false);
-    })
-    .catch(error => {
+
+    } catch (error) {
         console.error('Error:', error);
-    });
+    } finally {
+        // end loading
+        setVisible('#loading', false);
+    }
 }
 
 
@@ -464,54 +715,6 @@ function convertToPairs(array) {
     return result;
 }
 
-
-
-async function getchargingstation(){
-    lat = start[0]
-    lon = start[1]
-    
-    //clear all the existing charging station
-    map.eachLayer(function(layer) {
-    // Check if the layer is a marker and its icon option is set to charging_station
-    if (layer instanceof L.Marker && layer.options.icon === charging_station) {
-        // Remove the marker from the map
-        map.removeLayer(layer);
-    }
-});
-    chargingStationMarkers = []
-    fetch(`${baseUrl}/station?lat=${lat}&lon=${lon}`)
-    .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();})
-    .then(data => {
-        data.forEach(element => {
-            chargingStationMarkers[[element.lat, element.lon].toString()] = marker;
-            var marker = show_marker(element.lat,element.lon,charging_station)
-            marker.addEventListener('click', async function() {
-                marker.bindPopup(`<b>Charging Station</b><br>${element.name}<br>`).openPopup();
-                click_lat = element.lat
-                click_lon = element.lon
-                var result = await createPath()
-                if (result>=0){
-                    remaining_battery = result;
-                    const currentBatteryLabel = document.createElement('label');
-                    currentBatteryLabel.setAttribute('for', 'currentBatteryLevel');
-                    currentBatteryLabel.textContent = "Current Battery level is: " + Math.round(remaining_battery * 10)/10 + " %";
-                    const form = document.getElementById('batteryInputForm');
-                    form.insertBefore(currentBatteryLabel, form.firstChild);
-                    map.setView([start[0],start[1]], 10);
-                    batteryForm.style.display = 'flex';
-                }
-            });
-        });
-    })
-}
-
-
-
-
 function show_marker(lat, lon, picture) {
     var marker = L.marker([lat, lon],{icon:picture}).addTo(map);
     return marker
@@ -525,53 +728,53 @@ function refresh() {
     });
 }
 
-function refresh_shape() {
-    map.eachLayer(function (layer) {
-        if (layer instanceof L.Polygon) {
-            map.removeLayer(layer);
-        }
-    })
-}
+// function refresh_shape() {
+//     map.eachLayer(function (layer) {
+//         if (layer instanceof L.Polygon) {
+//             map.removeLayer(layer);
+//         }
+//     })
+// }
 
 
-function hideShowLayer(opacityValue,fillOpacityValue) {
-    var hasPolygons = false; // Flag to check if any polygon layers are present
-    map.eachLayer(function (layer) {
-        if (layer instanceof L.Polygon) {
-            hasPolygons = true; // Set the flag to true since at least one polygon layer is found
-            layer.setStyle({ // Change style to hide the layer
-                opacity: opacityValue, // Make the layer transparent
-                fillOpacity: fillOpacityValue // Make the layer's fill transparent (if any)
-            });
-        }
-    });
+// function hideShowLayer(opacityValue,fillOpacityValue) {
+//     var hasPolygons = false; // Flag to check if any polygon layers are present
+//     map.eachLayer(function (layer) {
+//         if (layer instanceof L.Polygon) {
+//             hasPolygons = true; // Set the flag to true since at least one polygon layer is found
+//             layer.setStyle({ // Change style to hide the layer
+//                 opacity: opacityValue, // Make the layer transparent
+//                 fillOpacity: fillOpacityValue // Make the layer's fill transparent (if any)
+//             });
+//         }
+//     });
 
-    if (!hasPolygons) {
-        alert("Alpha shape is not yet created");
-        return 0;
-    }
-    return 1;
-}
+//     if (!hasPolygons) {
+//         alert("Alpha shape is not yet created");
+//         return 0;
+//     }
+//     return 1;
+// }
 
-document.getElementById('checkbox').addEventListener('change', function(event) {
-    // Your event handling code here
-    var result = 0;
-    if (event.target.checked) {
-        // Checkbox is checked
-        result = hideShowLayer(0,0); // checked, hide alpha shape
-        if (result  == 1){
-            map.setView(start, 8);
-        }
-        else event.target.checked = false;
-    } else {
-        result = hideShowLayer(1,0.2);// Checkbox is unchecked, show alpha shape
-        if (result  == 1){
-            map.setView(start, 7);
-        }
-        else event.target.checked = true;
-        // You may want to do something else here if needed
-    }
-});
+// document.getElementById('checkbox').addEventListener('change', function(event) {
+//     // Your event handling code here
+//     var result = 0;
+//     if (event.target.checked) {
+//         // Checkbox is checked
+//         result = hideShowLayer(0,0); // checked, hide alpha shape
+//         if (result  == 1){
+//             map.setView(start, 8);
+//         }
+//         else event.target.checked = false;
+//     } else {
+//         result = hideShowLayer(1,0.2);// Checkbox is unchecked, show alpha shape
+//         if (result  == 1){
+//             map.setView(start, 7);
+//         }
+//         else event.target.checked = true;
+//         // You may want to do something else here if needed
+//     }
+// });
 
 function removeMarkerAtCoordinates(latToRemove, lngToRemove) {
     // Iterate through all markers on the map
@@ -615,25 +818,37 @@ function initAutocomplete() {
 }
 
 
-    document.getElementById('coordinateForm').addEventListener('submit', async function(event) {
+document.getElementById('coordinateForm').addEventListener('submit', async function(event) {
     event.preventDefault();
+    
+    // Set loading message for coordinate form submission
+    document.getElementById('loading-message').textContent = "Initialising starting position...";
     setVisible('#loading', true);
-    var addressInput = document.getElementById('address').value;
+    
+    var addressInput = document.getElementById('selected_address_data').value;
     var batteryInput = document.getElementById('battery').value;
 
-    var address = addressInput !== '' ? addressInput : "2922 10 St SW, Calgary";
-
+    var address = addressInput !== '' ? addressInput : "Vancouver, BC, Canada";
     var battery = batteryInput !== '' ? batteryInput : "100";
-    
+
     var [latitude, longitude] = await geocodeAddress(address);
     start = [latitude, longitude];
-    remaining_battery = battery
+    initial_start = [latitude,longitude];
+    initial_battery = battery;
+    remaining_battery = battery;
     refresh();
-    map.setView([latitude, longitude], 7);
+    map.setView([latitude, longitude], 12);
     var marker = show_marker(start[0],start[1],carIcon);
     show_battery_level(marker)
     // show_starting_point(latitude, longitude);
+    
+    // Update message before starting alpha shape calculation
+    document.getElementById('loading-message').textContent = "";
     getalphashape(remaining_battery);
+    
+    // Clear loading message and hide spinner
+    document.getElementById('loading-message').textContent = "";
+    setVisible('#loading', false);
 })
 
 //showing the remaining battery when pointing to the car
@@ -651,4 +866,39 @@ function show_battery_level(marker){
         }
     });
 }
+
+document.getElementById('resetMapButton').addEventListener('click', function(event) {
+    // Prevent any default form submission behavior
+    event.preventDefault(); 
+    
+    // 1. Show loading screen with a specific message
+    document.getElementById('loading-message').textContent = "Recalculating initial range and clearing map...";
+    setVisible('#loading', true);
+    
+    // 2. Clear map features and re-establish the starting point
+    // Note: Assuming 'refresh()' removes old paths/shapes.
+    refresh();
+    
+    map.setView([initial_start[0], initial_start[1]], 12);
+    
+    // Log the current starting point for debugging
+    console.log("Resetting map from starting point:", start);
+
+    // Re-draw the starting marker and its battery level display
+    start = initial_start;
+    var marker = show_marker(start[0], start[1], carIcon);
+    show_battery_level(marker);
+    
+    // 3. Re-calculate and re-draw the initial reachable area (alpha shape)
+    // Note: getalphashape is assumed to be synchronous or handle its own loading internally after this point.
+    // If getalphashape is an async function, you should use 'await' here: await getalphashape(remaining_battery);
+    remaining_battery = initial_battery;
+    getalphashape(remaining_battery);
+    
+    // 4. Hide loading screen and clear message
+    // You should use a brief setTimeout if getalphashape is synchronous but slow, to ensure the loading message is seen.
+    // Otherwise, hide it immediately:
+    document.getElementById('loading-message').textContent = "";
+    setVisible('#loading', false);
+});
 
