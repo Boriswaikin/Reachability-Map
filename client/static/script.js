@@ -661,14 +661,14 @@ async function getalphashape(battery = 100) {
     const lon = start[1];
 
     try {
-        const response = await fetch(`${baseUrl}/alpha?lat=${lat}&lon=${lon}&battery=${battery}`);
+        // const response = await fetch(`${baseUrl}/alpha?lat=${lat}&lon=${lon}&battery=${battery}`);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        // if (!response.ok) {
+        //     throw new Error(`HTTP error! Status: ${response.status}`);
+        // }
 
-        const data = await response.json();
-        console.log("data:", data);
+        // const data = await response.json();
+        // console.log("data:", data);
 
         /*
         const colorlist = ['darkgreen', 'yellow', 'red'];
@@ -849,12 +849,11 @@ document.getElementById('coordinateForm').addEventListener('submit', async funct
     // show_starting_point(latitude, longitude);
     
     // Update message before starting alpha shape calculation
-    document.getElementById('loading-message').textContent = "";
+    document.getElementById('loading-message').textContent = "Initialising starting position...";
+    if (marker) {
+        setVisible('#loading', false);
+    }
     getalphashape(remaining_battery);
-    
-    // Clear loading message and hide spinner
-    document.getElementById('loading-message').textContent = "";
-    setVisible('#loading', false);
     startingPointInitialised = true ;
 })
 
@@ -879,6 +878,12 @@ document.getElementById('resetMapButton').addEventListener('click', function(eve
     event.preventDefault(); 
     
     // 1. Show loading screen with a specific message
+    if (!startingPointInitialised){
+        // Display an alert message if the start location is not set
+        alert("Please input your address in the START PLAN");
+        return; 
+    }
+    
     document.getElementById('loading-message').textContent = "Recalculating initial range and clearing map...";
     setVisible('#loading', true);
     
@@ -905,7 +910,9 @@ document.getElementById('resetMapButton').addEventListener('click', function(eve
     // 4. Hide loading screen and clear message
     // You should use a brief setTimeout if getalphashape is synchronous but slow, to ensure the loading message is seen.
     // Otherwise, hide it immediately:
-    document.getElementById('loading-message').textContent = "";
-    setVisible('#loading', false);
+    document.getElementById('loading-message').textContent = "Recalculating initial range and clearing map...";
+    if (marker) {
+        setVisible('#loading', false);
+    }
 });
 

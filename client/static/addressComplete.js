@@ -4,7 +4,7 @@ function initAutocompleteWidget() {
 
     // Insert the interactive input field into the DIV container
     // Ensure 'autocomplete-container' exists in your HTML
-    document.getElementById('autocomplete-container').appendChild(placeAutocompleteElement);
+    document.getElementById('autocomplete-input').appendChild(placeAutocompleteElement);
 
     // Listen for the user selecting an address from the dropdown ('gmp-select')
     placeAutocompleteElement.addEventListener('gmp-select', async ({placePrediction}) => {
