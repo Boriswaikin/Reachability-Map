@@ -5,6 +5,7 @@ var click_lat;
 var click_lon;
 var initial_battery;
 var remaining_battery;
+var startingPointInitialised = false;
 var chargingStationMarkers = {};
 // var previous_point_speed
 var chunk_size = 10;
@@ -159,6 +160,12 @@ map.on('click', async function(e){
         return;
     }
     
+    if (!startingPointInitialised){
+        // Display an alert message if the start location is not set
+        alert("Please input your address in the START PLAN");
+        return; 
+    }
+
     // Clear any previous temporary marker
     if (tempConfirmationMarker) {
         map.removeLayer(tempConfirmationMarker);
@@ -394,7 +401,7 @@ async function createPath(){
     // if (!coordinates_tmp) return -1;
     var coordinates = swaplatlng(coordinates_tmp)
     coordinates = splitCoordinate(coordinates,chunk_size)
-    console.log("Coordinates array: ", coordinates)
+    // console.log("Coordinates array: ", coordinates)
     var chargelist = []
     // console.log(coordinates)
     if (coordinates) {
@@ -424,7 +431,7 @@ async function createPath(){
                 }
                 chargelist.push(new_charge)
                 previous_charge = new_charge
-                console.log(previous_charge)
+                // console.log(previous_charge)
                 previous_speed = new_speed
             }
         }
@@ -437,7 +444,7 @@ async function createPath(){
             for (var i = 0;i<chargelist.length;i++){
                 coordinates_array = convertToPairs(coordinates[i])
                 var path_color = color_map[Math.floor(chargelist[i] / 10) * 10];
-                console.log("chargeList: ",path_color," ",chargelist[i])
+                // console.log("chargeList: ",path_color," ",chargelist[i])
                 var polyline = new L.polyline(coordinates_array, {color: path_color
                 ,weight: 7,smoothFactor: 1}).addTo(map);
             } 
@@ -528,7 +535,6 @@ async function getTripCoordinate(lat, lon) {
     const originStr = origin[0] + ',' + origin[1];
     const destinationStr = destination[0] + ',' + destination[1];
     const coordinates = originStr + ';' + destinationStr;
-    console.log(mapboxApiKey)
     return fetch(`https://api.mapbox.com/directions/v5/${profile}/${coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=full&access_token=${mapboxApiKey}`)
         .then(response => {
             if (!response.ok) {
@@ -849,6 +855,7 @@ document.getElementById('coordinateForm').addEventListener('submit', async funct
     // Clear loading message and hide spinner
     document.getElementById('loading-message').textContent = "";
     setVisible('#loading', false);
+    startingPointInitialised = true ;
 })
 
 //showing the remaining battery when pointing to the car
