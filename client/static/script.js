@@ -859,8 +859,24 @@ document.getElementById('coordinateForm').addEventListener('submit', async funct
     document.getElementById('loading-message').textContent = "Initialising starting position...";
     await getalphashape(remaining_battery);
     setVisible('#loading', false);
+    setTimeout(() => {
+        showDestinationPrompt(); 
+    }, 100); // Use 0ms delay
     startingPointInitialised = true ;
 })
+
+function showDestinationPrompt() {
+    const message = "✅ Good! Next step: Click a point on the map (on land) to set your Destination.";
+    
+    // Use the native browser alert()
+    alert(message);
+    
+    // Provide Visual Feedback on the Map after the user dismisses the alert
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        mapElement.style.cursor = 'crosshair';
+    }
+}
 
 //showing the remaining battery when pointing to the car
 function show_battery_level(marker){
