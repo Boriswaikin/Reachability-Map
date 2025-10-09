@@ -200,29 +200,32 @@ map.on('click', async function(e){
 });
 
 async function getchargingstation(){
-    lat = start[0]
-    lon = start[1]
+    lat = start[0];
+    lon = start[1];
     
-    // Clear all the existing charging station markers
+    // Clear existing markers (synchronous, runs immediately)
     map.eachLayer(function(layer) {
         if (layer instanceof L.Marker && layer.options.icon === charging_station) {
             map.removeLayer(layer);
         }
     });
-    chargingStationMarkers = {}; // Initialize as an empty object for key-value storage
+    chargingStationMarkers = {};
 
-    fetch(`${baseUrl}/station?lat=${lat}&lon=${lon}`)
-    .then((response) => {
+    try {
+        // Await the fetch and response processing
+        const response = await fetch(`${baseUrl}/station?lat=${lat}&lon=${lon}`);
+        
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return response.json();})
-    .then(data => {
+        
+        const data = await response.json(); // Await JSON parsing
+        
         data.forEach(element => {
             var marker = show_marker(element.lat, element.lon, charging_station);
             chargingStationMarkers[[element.lat, element.lon].toString()] = marker;
             
-            // 💥 Charging Station Click: Show Confirmation Popup 💥
+            // ... (Your marker click listener logic remains the same) ...
             marker.addEventListener('click', function() {
                 if (isProcessingClick) return; 
 
@@ -253,7 +256,11 @@ async function getchargingstation(){
                 map.setView([element.lat, element.lon], map.getZoom());
             });
         });
-    })
+
+    } catch (error) {
+        console.error('Error fetching charging stations:', error);
+        throw error; // Re-throw the error so getalphashape's try/catch can catch it
+    }
 }
     
 
@@ -850,10 +857,8 @@ document.getElementById('coordinateForm').addEventListener('submit', async funct
     
     // Update message before starting alpha shape calculation
     document.getElementById('loading-message').textContent = "Initialising starting position...";
-    if (marker) {
-        setVisible('#loading', false);
-    }
-    getalphashape(remaining_battery);
+    await getalphashape(remaining_battery);
+    setVisible('#loading', false);
     startingPointInitialised = true ;
 })
 
@@ -873,7 +878,7 @@ function show_battery_level(marker){
     });
 }
 
-document.getElementById('resetMapButton').addEventListener('click', function(event) {
+document.getElementById('resetMapButton').addEventListener('click', async function(event) {
     // Prevent any default form submission behavior
     event.preventDefault(); 
     
@@ -883,7 +888,7 @@ document.getElementById('resetMapButton').addEventListener('click', function(eve
         alert("Please input your address in the START PLAN");
         return; 
     }
-    
+
     document.getElementById('loading-message').textContent = "Recalculating initial range and clearing map...";
     setVisible('#loading', true);
     
@@ -894,7 +899,7 @@ document.getElementById('resetMapButton').addEventListener('click', function(eve
     map.setView([initial_start[0], initial_start[1]], 12);
     
     // Log the current starting point for debugging
-    console.log("Resetting map from starting point:", start);
+    // console.log("Resetting map from starting point:", start);
 
     // Re-draw the starting marker and its battery level display
     start = initial_start;
@@ -905,14 +910,13 @@ document.getElementById('resetMapButton').addEventListener('click', function(eve
     // Note: getalphashape is assumed to be synchronous or handle its own loading internally after this point.
     // If getalphashape is an async function, you should use 'await' here: await getalphashape(remaining_battery);
     remaining_battery = initial_battery;
-    getalphashape(remaining_battery);
+    await getalphashape(remaining_battery);
     
     // 4. Hide loading screen and clear message
     // You should use a brief setTimeout if getalphashape is synchronous but slow, to ensure the loading message is seen.
     // Otherwise, hide it immediately:
-    document.getElementById('loading-message').textContent = "Recalculating initial range and clearing map...";
-    if (marker) {
-        setVisible('#loading', false);
-    }
+    document.getElementById('loading-message').textContent = "Resetting to original position and clearing map...";
+    setVisible('#loading', false);
+    
 });
 
