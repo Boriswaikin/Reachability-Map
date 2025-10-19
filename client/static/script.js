@@ -535,35 +535,102 @@ function swaplatlng(coordinate){
     return swappedCoordinates;
 }
  
+// async function getTripCoordinate(lat, lon) {
+//     const origin = [start[1],start[0]]
+//     const profile='mapbox/driving-traffic'
+//     const destination = [lon.toString(),lat.toString()]
+//     const originStr = origin[0] + ',' + origin[1];
+//     const destinationStr = destination[0] + ',' + destination[1];
+//     const coordinates = originStr + ';' + destinationStr;
+//     return fetch(`https://api.mapbox.com/directions/v5/${profile}/${coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=full&access_token=${mapboxApiKey}`)
+//         .then(response => {
+//             if (!response.ok) {
+//                 console.error('Response failed, status code:', response.status);
+//                 return false;
+//             }
+//             return response.json();
+//         })
+//         .then(data => {
+//             if (data.code !== 'Ok') {
+//                 console.error('Error in API response:', data.message);
+//                 return false;
+//             }
+//             const coordinate = data.routes[0].geometry.coordinates;
+//             coordinate.unshift(origin);
+//             coordinate.push(destination);
+//             return coordinate;
+//         })
+//         .catch(error => {
+//             console.error('Error:', error);
+//             return false;
+//         });
+// }
+
 async function getTripCoordinate(lat, lon) {
-    const origin = [start[1],start[0]]
-    const profile='mapbox/driving-traffic'
-    const destination = [lon.toString(),lat.toString()]
-    const originStr = origin[0] + ',' + origin[1];
-    const destinationStr = destination[0] + ',' + destination[1];
-    const coordinates = originStr + ';' + destinationStr;
-    return fetch(`https://api.mapbox.com/directions/v5/${profile}/${coordinates}?&steps=true&geometries=geojson&waypoints_per_route=true&overview=full&access_token=${mapboxApiKey}`)
-        .then(response => {
-            if (!response.ok) {
-                console.error('Response failed, status code:', response.status);
-                return false;
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.code !== 'Ok') {
-                console.error('Error in API response:', data.message);
-                return false;
-            }
-            const coordinate = data.routes[0].geometry.coordinates;
-            coordinate.unshift(origin);
-            coordinate.push(destination);
-            return coordinate;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            return false;
-        });
+    // Round to 4 decimal places (≈11 meters accuracy)
+    function roundCoord(value) {
+        return Number(value.toFixed(4));
+    }
+
+    // Get and round user-selected start and end points
+    const startLat = roundCoord(start[0]);
+    const startLon = roundCoord(start[1]);
+    const endLat   = roundCoord(lat);
+    const endLon   = roundCoord(lon);
+
+    // 1. First: check existing trip in database using GET
+    const dbCheck = await fetch(
+        `/api/route?start_lat=${startLat}&start_lon=${startLon}&end_lat=${endLat}&end_lon=${endLon}`
+    ).then(res => res.json());
+
+    if (Array.isArray(dbCheck)) {
+        console.log("Loaded from PostgreSQL (Existing route found)");
+        return dbCheck.map(r => [r.lon, r.lat]);  // Convert to [lng, lat] for Mapbox
+    }
+
+    // 2. Otherwise: call Mapbox Directions API
+    console.log("No route found in DB — calling Mapbox API...");
+
+    const origin = [startLon, startLat];
+    const destination = [endLon, endLat];
+    const coordinates = `${startLon},${startLat};${endLon},${endLat}`;
+
+    const response = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${coordinates}?steps=true&geometries=geojson&overview=full&access_token=${mapboxApiKey}`);
+    const data = await response.json();
+
+    if (data.code !== 'Ok') {
+        console.error("Mapbox API error:", data);
+        return false;
+    }
+
+    // Create full route (including exact start/end at both ends)
+    const route = data.routes[0].geometry.coordinates;
+    route.unshift(origin);
+    route.push(destination);
+
+    // 3️⃣ Prepare rounded data to save to database
+    const routeData = {
+        start_lat: startLat,
+        start_lon: startLon,
+        end_lat:   endLat,
+        end_lon:   endLon,
+        waypoints: route.map((c, idx) => ({
+            lat: roundCoord(c[1]),
+            lon: roundCoord(c[0]),
+            order_index: idx
+        }))
+    };
+
+    console.log("Saving route to database:", JSON.stringify(routeData, null, 2));
+
+    // 4️⃣ Save to Flask/PostgreSQL
+    await fetch('/api/save-route', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(routeData)
+    });
+
+    return route; // In format [ [lon, lat], [lon, lat], ...]
 }
 
 async function getTripDistance(tripCoordinate, profile = 'mapbox/driving-traffic') {
